@@ -1,11 +1,11 @@
-import sys
-
 from servo_controller_msgs.msg import ServosPosition
 
 from manipulation.utils.grasping_base import GraspingNodeBase
 from manipulation.utils.action_group_controller import ActionGroupController
 
+
 ACTION_GROUP_SAVE_DIR = '/home/ubuntu/software/arm_pc/ActionGroups'
+
 
 class ManipulationNode(GraspingNodeBase):
     def __init__(self, name):

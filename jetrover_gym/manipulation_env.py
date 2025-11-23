@@ -1,9 +1,14 @@
 import sys
 from time import sleep
 
+import cv2
 from gymnasium import Env, spaces
 import numpy as np
+import rclpy
+from rclpy import ok as ros_ok
+from rclpy import spin_once
 
+from jetrover_gym.camera_node import CameraNode
 from jetrover_gym.manipulation_node import ManipulationNode
 from jetrover_gym.utils import T_to_xyz_rpy, xyz_rpy_to_T
 
@@ -22,7 +27,7 @@ class JetRoverManipulationEnv(Env):
     def __init__(self,
                  name='jetrover_manipulation',
                  max_episode_steps=100,
-                 use_rgb=False,
+                 use_rgb=True,
                  debug=False,
                  ik_error_threshold=0.01,
                  delta_pulse_max=50,
@@ -64,6 +69,7 @@ class JetRoverManipulationEnv(Env):
         self.global_step = 0
 
         if self._use_rgb:
+            self._camera_node = CameraNode()
             self.observation_space['rgb'] = spaces.Box(
                 low=0,
                 high=255,
@@ -79,6 +85,17 @@ class JetRoverManipulationEnv(Env):
             dtype=np.float32
         ) 
 
+    def _get_camera(self,
+                    timeout=0.05):
+        # rgb = self._camera_node.get_image(resize_to=(self._img_rgb_width, self._img_rgb_height))
+        spin_once(self._camera_node, timeout_sec=timeout)
+        if self._camera_node.latest_rgb is None:
+            return np.zeros((self._img_rgb_width, self._img_rgb_height, 3), dtype=np.uint8)
+
+        rgb = self._camera_node.latest_rgb
+        if rgb.shape[:2] != (self._img_rgb_height, self._img_rgb_width):
+            rgb = cv2.resize(rgb, (self._img_rgb_width, self._img_rgb_height))
+        return rgb
 
     def _get_observation(self):
         """Get observation of the state
@@ -86,6 +103,11 @@ class JetRoverManipulationEnv(Env):
         Returns:
             obs: EE position (xyz), rotation (rpy), and gripper_state (open/close)
         """
+        obs = {}
+        if self._use_rgb:
+            rgb = self._get_camera()
+            obs['rgb'] = rgb
+
         obs_state = []
 
         joint_pulses = self._node.get_joint_positions_pulse()
@@ -100,9 +122,7 @@ class JetRoverManipulationEnv(Env):
         obs_state.extend(rpy)
         obs_state.append(gripper_state)
 
-        obs = {'state': np.asarray(obs_state)}
-        if self._use_rgb:
-            obs['rgb'] = ...
+        obs['state'] = np.asarray(obs_state)
         return obs
 
     def _bounded_ee_pos(self, pos: np.ndarray) -> np.ndarray:
@@ -155,13 +175,13 @@ class JetRoverManipulationEnv(Env):
         target_joint_pulses = target_joint_pulses.astype(np.int64)
 
         if np.any(target_joint_pulses < 0):
-            print("Negative pulses!")
+            print("IK solution has negative pulses!")
             print(f"target pulses: {target_joint_pulses}")
             return False
 
         delta_joint_pulses = np.abs(target_joint_pulses - joint_pulses)
         if np.any(delta_joint_pulses >= self._delta_pulse_max):
-            print("Too different pulses!")
+            print(f"Too different pulses! Max: ManipulationEnv._delta_pulse_max = {self._delta_pulse_max}")
             print(f"current pulses: {joint_pulses}")
             print(f"target pulses: {target_joint_pulses}")
             return False
@@ -227,14 +247,22 @@ class JetRoverManipulationEnv(Env):
         }
         return obs, reward, terminated, truncated, info
 
+    def close(self):
+        if self._use_rgb:
+            self._camera_node.destroy_node()
+        if ros_ok():
+            rclpy.shutdown()
+
 
 if __name__ == "__main__":
     env = JetRoverManipulationEnv(debug=True)
 
     obs, info = env.reset()
+    breakpoint()
     for _ in range(5):
         action = env.action_space.sample()
         obs, reward, terminated, truncated, info = env.step(action)
+    env.close()
 
     # v Implement Gym interface (get_observation, reset, control)
     # v Implement Teleoperation using keyboard and store dataset

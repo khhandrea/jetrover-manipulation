@@ -51,7 +51,7 @@ def print_help():
     print_yellow("    m: to save demonstration")
     print_yellow("    h: help")
     print_yellow("    q: quit")
-    print_yellow("    [Belows can be typed at once e.g. 'as'")
+    print_yellow("  Belows can be typed at once e.g. 'aso(enter)'")
     print_yellow("    w, s : move upward/downward")
     print_yellow("    a, d : move forward/backward based on the robot's torso")
     print_yellow("    o, l:  rotate pitch lift/lower the gripper")
