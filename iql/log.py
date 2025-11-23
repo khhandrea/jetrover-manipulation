@@ -1,4 +1,3 @@
-from torch.utils.tensorboard import SummaryWriter
 from collections import defaultdict
 import json
 import os
@@ -94,6 +93,7 @@ class Logger(object):
     def __init__(self, log_dir, use_tb=True, config='rl'):
         self._log_dir = log_dir
         if use_tb:
+            from torch.utils.tensorboard import SummaryWriter
             tb_dir = os.path.join(log_dir, 'tb')
             if os.path.exists(tb_dir):
                 shutil.rmtree(tb_dir)
