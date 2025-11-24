@@ -88,7 +88,6 @@ class JetRoverManipulationEnv(Env):
 
     def _get_camera(self,
                     timeout=0.05):
-        # rgb = self._camera_node.get_image(resize_to=(self._img_rgb_width, self._img_rgb_height))
         spin_once(self._camera_node, timeout_sec=timeout)
         if self._camera_node.latest_rgb is None:
             return np.zeros((self._img_rgb_width, self._img_rgb_height, 3), dtype=np.uint8)
@@ -236,12 +235,6 @@ class JetRoverManipulationEnv(Env):
         Args:
             action: EE delta_position (xyz), delta_rotation (rpy), and gripper_state (open/close)
         """
-        print("ORIGINAL ACTION:", action[-1])
-        # if action[-1] > GRIPPER_THRESOLD:
-        #     action[-1] = 1.0
-        # else:
-        #     action[-1] = 0.0
-
         result = self._control(action)
         self.global_step += 1
 
@@ -270,8 +263,3 @@ if __name__ == "__main__":
         action = env.action_space.sample()
         obs, reward, terminated, truncated, info = env.step(action)
     env.close()
-
-    # v Implement Gym interface (get_observation, reset, control)
-    # v Implement Teleoperation using keyboard and store dataset
-    # 3. Replay buffer to load dataset and pre-process state/action/reward
-    # 4. Modify IQL 

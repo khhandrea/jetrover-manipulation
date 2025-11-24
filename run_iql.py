@@ -6,9 +6,6 @@ sys.path.append("./iql")
 from iql.IQL import IQL
 from jetrover_gym.manipulation_env import JetRoverManipulationEnv
 
-sys.path.append("./r3m")
-import r3m
-
 
 MODEL_PATH = "iql/results/models/bc_actor_s1000000.pth"
 
