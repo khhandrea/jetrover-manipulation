@@ -18,6 +18,7 @@ from manipulation.kinematics import forward_kinematics, inverse_kinematics
 ACTION_GROUPSAVE_DIR = '/home/ubuntu/software/arm_pc/ActionGroups'
 INITIAL_GRIPPER_PULSE = 500
 GRIPPER_PULSE_RANGE = (120, 550)
+GRIPPER_THRESOLD = 0.5
 EE_POS_LOWER = np.array([0.15, -0.001, 0.02], dtype=np.float32)
 EE_POS_UPPER = np.array([0.24, 0.001, 0.29], dtype=np.float32)
 
@@ -193,7 +194,7 @@ class JetRoverManipulationEnv(Env):
 
         # Gripper
         target_gripper_pulse = int(gmin + (1 - gripper_action) * (gmax - gmin))
-        target_gripper_pulse = gmax if target_gripper_pulse > (gmax + gmin) / 2 else gmin
+        target_gripper_pulse = gmax if target_gripper_pulse > (gmax + gmin) * GRIPPER_THRESOLD else gmin
         self._node._set_position_pulse([(10, target_gripper_pulse)], self._control_duration)
         self._gripper_pulse = target_gripper_pulse
 
@@ -235,6 +236,12 @@ class JetRoverManipulationEnv(Env):
         Args:
             action: EE delta_position (xyz), delta_rotation (rpy), and gripper_state (open/close)
         """
+        print("ORIGINAL ACTION:", action[-1])
+        # if action[-1] > GRIPPER_THRESOLD:
+        #     action[-1] = 1.0
+        # else:
+        #     action[-1] = 0.0
+
         result = self._control(action)
         self.global_step += 1
 

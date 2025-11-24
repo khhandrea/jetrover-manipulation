@@ -10,7 +10,7 @@ sys.path.append("./r3m")
 import r3m
 
 
-MODEL_PATH = "iql/results/models/actor_s100000.pth"
+MODEL_PATH = "iql/results/models/bc_actor_s1000000.pth"
 
 def main():
     # Hyperparameters
